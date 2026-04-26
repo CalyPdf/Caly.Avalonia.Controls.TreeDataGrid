@@ -1503,7 +1503,7 @@ namespace Avalonia.Controls.TreeDataGridTests.Selection
                 target.Select(new IndexPath(1, 1));
 
                 var debug = (AvaloniaListDebug<Node>)data[1].Children!;
-                Assert.Single(debug.GetCollectionChangedSubscribers());
+                Assert.Single(debug.GetCollectionChangedSubscribers()!);
 
                 target.Deselect(new IndexPath(1, 1));
 

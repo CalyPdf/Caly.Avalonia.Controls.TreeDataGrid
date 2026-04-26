@@ -199,8 +199,8 @@ namespace Avalonia.Controls.TreeDataGridTests
                 {
                     Assert.Equal(NotifyCollectionChangedAction.Add, e.Action);
                     Assert.Equal(0, e.NewStartingIndex);
-                    Assert.Equal(1, e.NewItems!.Count);
-                    Assert.Equal(10, ((IModelIndexableRow)e.NewItems[0]!).ModelIndex);
+                    Assert.Single(e.NewItems!);
+                    Assert.Equal(10, ((IModelIndexableRow)e.NewItems![0]!).ModelIndex);
                     ++raised;
                 };
 
@@ -225,8 +225,8 @@ namespace Avalonia.Controls.TreeDataGridTests
                 {
                     Assert.Equal(NotifyCollectionChangedAction.Remove, e.Action);
                     Assert.Equal(4, e.OldStartingIndex);
-                    Assert.Equal(1, e.OldItems!.Count);
-                    Assert.Equal(5, ((IModelIndexableRow)e.OldItems[0]!).ModelIndex);
+                    Assert.Single(e.OldItems!);
+                    Assert.Equal(5, ((IModelIndexableRow)e.OldItems![0]!).ModelIndex);
                     ++raised;
                 };
 
@@ -252,7 +252,7 @@ namespace Avalonia.Controls.TreeDataGridTests
                     else if (e.Action == NotifyCollectionChangedAction.Add)
                         Assert.Equal(0, e.NewStartingIndex);
                     else
-                        Assert.True(false, "Unexpected collection change");
+                        Assert.Fail("Unexpected collection change");
                     ++raised;
                 };
 
@@ -278,7 +278,7 @@ namespace Avalonia.Controls.TreeDataGridTests
                     else if (e.Action == NotifyCollectionChangedAction.Add)
                         Assert.Equal(4, e.NewStartingIndex);
                     else
-                        Assert.True(false, "Unexpected collection change");
+                        Assert.Fail("Unexpected collection change");
                     ++raised;
                 };
 

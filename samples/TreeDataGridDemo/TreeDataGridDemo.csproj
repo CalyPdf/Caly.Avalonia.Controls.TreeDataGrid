@@ -14,10 +14,9 @@
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="$(AvaloniaSamplesVersion)" />
     <PackageReference Include="Avalonia.Desktop" Version="$(AvaloniaSamplesVersion)" />
-    <PackageReference Include="Avalonia.Diagnostics" Version="$(AvaloniaSamplesVersion)" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="$(AvaloniaSamplesVersion)" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="$(AvaloniaSamplesVersion)" />
-    <PackageReference Include="Avalonia.ReactiveUI" Version="$(AvaloniaSamplesVersion)" />
+    <PackageReference Include="ReactiveUI.Avalonia" Version="$(AvaloniaSamplesVersion)" />
     <PackageReference Include="Bogus" Version="34.0.2" />
   </ItemGroup>
   <ItemGroup>

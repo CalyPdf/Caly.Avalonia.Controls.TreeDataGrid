@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using Avalonia;
-using Avalonia.ReactiveUI;
+using ReactiveUI.Avalonia;
 
 namespace TreeDataGridDemo
 {
@@ -21,7 +21,10 @@ namespace TreeDataGridDemo
         public static AppBuilder BuildAvaloniaApp()
             => AppBuilder.Configure<App>()
                 .UsePlatformDetect()
-                .UseReactiveUI()
+                .UseReactiveUI(rxui =>
+                {
+                    // Optional: add custom registration here via rxui.WithRegistration(...)
+                })
                 .LogToTrace();
     }
 }

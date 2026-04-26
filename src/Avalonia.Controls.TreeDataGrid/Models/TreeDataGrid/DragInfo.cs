@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Avalonia.Input;
 
 namespace Avalonia.Controls.Models.TreeDataGrid
 {
@@ -9,9 +10,9 @@ namespace Avalonia.Controls.Models.TreeDataGrid
     public class DragInfo
     {
         /// <summary>
-        /// Defines the data format in an <see cref="Avalonia.Input.IDataObject"/>.
+        /// Defines the data format in an <see cref="Avalonia.Input.IDataTransfer"/>.
         /// </summary>
-        public const string DataFormat = "TreeDataGridDragInfo";
+        public static readonly DataFormat<DragInfo> DataFormat = Input.DataFormat.CreateInProcessFormat<DragInfo>("TreeDataGridDragInfo");
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DragInfo"/> class.

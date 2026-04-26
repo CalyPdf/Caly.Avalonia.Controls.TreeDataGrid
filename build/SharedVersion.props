@@ -1,11 +1,12 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <Product>Avalonia.Controls.TreeDataGrid</Product>
-    <Version>11.0.10</Version>
+    <Product>Caly.Avalonia.Controls.TreeDataGrid</Product>
+    <Version>12.0.1.0</Version>
     <Copyright>Copyright © AvaloniaUI 2023</Copyright>
     <Authors>Steven Kirk</Authors>
     <Company>AvaloniaUI</Company>
-    <Description>TreeDataGrid is a control which displays hierarchical and tabular data together in a single view. It is a combination of a TreeView and DataGrid control.</Description>
+    <Description>For use in Caly Pdf: TreeDataGrid is a control which displays hierarchical and tabular data together in a single view. It is a combination of a TreeView and DataGrid control.</Description>
     <RepositoryType>git</RepositoryType>
+    <RepositoryUrl>https://github.com/CalyPdf/Caly.Avalonia.Controls.TreeDataGrid</RepositoryUrl>
   </PropertyGroup>
 </Project>
