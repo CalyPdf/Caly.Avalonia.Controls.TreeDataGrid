@@ -20,6 +20,9 @@ namespace Avalonia.Controls
         public static readonly StyledProperty<bool> AutoDragDropRowsProperty =
             AvaloniaProperty.Register<TreeDataGrid, bool>(nameof(AutoDragDropRows));
 
+        public static readonly StyledProperty<bool> AutoScrollHorizontallyProperty =
+            AvaloniaProperty.Register<TreeDataGrid, bool>(nameof(AutoScrollHorizontally), true);
+
         public static readonly StyledProperty<bool> CanUserResizeColumnsProperty =
             AvaloniaProperty.Register<TreeDataGrid, bool>(nameof(CanUserResizeColumns), true);
 
@@ -107,6 +110,18 @@ namespace Avalonia.Controls
         {
             get => GetValue(AutoDragDropRowsProperty);
             set => SetValue(AutoDragDropRowsProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the control may automatically scroll horizontally
+        /// in response to row, cell, or sub-item focus and selection changes. Defaults to <c>true</c>.
+        /// When set to <c>false</c>, vertical scroll-into-view continues to work, but the horizontal
+        /// scroll offset is preserved when items receive focus or are brought into view.
+        /// </summary>
+        public bool AutoScrollHorizontally
+        {
+            get => GetValue(AutoScrollHorizontallyProperty);
+            set => SetValue(AutoScrollHorizontallyProperty, value);
         }
 
         public bool CanUserResizeColumns
@@ -320,6 +335,16 @@ namespace Avalonia.Controls
                 h.ScrollChanged -= OnHeaderScrollChanged;
             }
 
+            if (RowsPresenter is { } prevRows)
+            {
+                prevRows.RemoveHandler(RequestBringIntoViewEvent, OnPresenterRequestBringIntoView);
+            }
+
+            if (ColumnHeadersPresenter is { } prevHeaders)
+            {
+                prevHeaders.RemoveHandler(RequestBringIntoViewEvent, OnPresenterRequestBringIntoView);
+            }
+
             base.OnApplyTemplate(e);
             ColumnHeadersPresenter = e.NameScope.Find<TreeDataGridColumnHeadersPresenter>("PART_ColumnHeadersPresenter");
             RowsPresenter = e.NameScope.Find<TreeDataGridRowsPresenter>("PART_RowsPresenter");
@@ -331,6 +356,45 @@ namespace Avalonia.Controls
                 s1.ScrollChanged += OnScrollChanged;
                 h1.ScrollChanged += OnHeaderScrollChanged;
             }
+
+            if (RowsPresenter is { } newRows)
+            {
+                newRows.AddHandler(RequestBringIntoViewEvent, OnPresenterRequestBringIntoView, handledEventsToo: true);
+            }
+
+            if (ColumnHeadersPresenter is { } newHeaders)
+            {
+                newHeaders.AddHandler(RequestBringIntoViewEvent, OnPresenterRequestBringIntoView, handledEventsToo: true);
+            }
+        }
+
+        private void OnPresenterRequestBringIntoView(object? sender, RequestBringIntoViewEventArgs e)
+        {
+            if (AutoScrollHorizontally || sender is not Visual presenter || e.TargetObject is null)
+            {
+                return;
+            }
+
+            var scroll = presenter.Equals(RowsPresenter) ? Scroll
+                : presenter.Equals(ColumnHeadersPresenter) ? _headerScroll
+                : null;
+
+            if (scroll is null)
+            {
+                return;
+            }
+
+            var transform = e.TargetObject.TransformToVisual(presenter);
+            if (!transform.HasValue)
+            {
+                return;
+            }
+
+            // Rewrite the rect so it appears horizontally already-visible to the surrounding
+            // ScrollViewer, while keeping the vertical extent intact.
+            var transformed = e.TargetRect.TransformToAABB(transform.Value);
+            e.TargetObject = presenter;
+            e.TargetRect = new Rect(scroll.Offset.X, transformed.Y, scroll.Viewport.Width, transformed.Height);
         }
 
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)

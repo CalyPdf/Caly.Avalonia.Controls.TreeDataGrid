@@ -496,6 +496,67 @@ namespace Avalonia.Controls.TreeDataGridTests
         }
 
         [AvaloniaFact(Timeout = 10000)]
+        public void Default_BringIntoView_Scrolls_Horizontally()
+        {
+            var (target, _) = CreateTarget(columns:
+            [
+                new TextColumn<Model, int>("ID", x => x.Id, width: new GridLength(100, GridUnitType.Pixel)),
+                new TextColumn<Model, string?>("Title1", x => x.Title, width: new GridLength(80, GridUnitType.Pixel)),
+                new TextColumn<Model, string?>("Title2", x => x.Title, width: new GridLength(80, GridUnitType.Pixel)),
+            ]);
+
+            Assert.True(target.AutoScrollHorizontally);
+            Assert.True(target.Scroll!.Extent.Width > target.Scroll.Viewport.Width);
+
+            // A rect at column 2's position (X=180..260) is past the right edge of the viewport.
+            target.RowsPresenter!.BringIntoView(0, new Rect(180, 0, 80, 10));
+            Layout(target);
+
+            Assert.True(target.Scroll.Offset.X > 0,
+                $"Expected horizontal scroll > 0 with default AutoScrollHorizontally, got X={target.Scroll.Offset.X}");
+        }
+
+        [AvaloniaFact(Timeout = 10000)]
+        public void AutoScrollHorizontally_False_Prevents_Horizontal_Scroll_On_BringIntoView()
+        {
+            var (target, _) = CreateTarget(columns:
+            [
+                new TextColumn<Model, int>("ID", x => x.Id, width: new GridLength(100, GridUnitType.Pixel)),
+                new TextColumn<Model, string?>("Title1", x => x.Title, width: new GridLength(80, GridUnitType.Pixel)),
+                new TextColumn<Model, string?>("Title2", x => x.Title, width: new GridLength(80, GridUnitType.Pixel)),
+            ]);
+
+            target.AutoScrollHorizontally = false;
+            Assert.True(target.Scroll!.Extent.Width > target.Scroll.Viewport.Width);
+
+            target.RowsPresenter!.BringIntoView(0, new Rect(180, 0, 80, 10));
+            Layout(target);
+
+            Assert.Equal(0, target.Scroll.Offset.X);
+        }
+
+        [AvaloniaFact(Timeout = 10000)]
+        public void AutoScrollHorizontally_False_Still_Allows_Vertical_Scroll_On_BringIntoView()
+        {
+            var (target, _) = CreateTarget(columns:
+            [
+                new TextColumn<Model, int>("ID", x => x.Id, width: new GridLength(100, GridUnitType.Pixel)),
+                new TextColumn<Model, string?>("Title1", x => x.Title, width: new GridLength(80, GridUnitType.Pixel)),
+            ]);
+
+            target.AutoScrollHorizontally = false;
+            target.Scroll!.Offset = new Vector(50, 0);
+            Layout(target);
+
+            target.RowsPresenter!.BringIntoView(50);
+            Layout(target);
+
+            Assert.Equal(50, target.Scroll.Offset.X);
+            Assert.True(target.Scroll.Offset.Y > 0,
+                $"Expected vertical scroll to increase, got Y={target.Scroll.Offset.Y}");
+        }
+
+        [AvaloniaFact(Timeout = 10000)]
         public void Should_Use_TextCell_StringFormat()
         {
             var (target, items) = CreateTarget(columns: new IColumn<Model>[]

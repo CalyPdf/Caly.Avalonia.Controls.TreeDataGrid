@@ -1,7 +1,7 @@
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Product>Caly.Avalonia.Controls.TreeDataGrid</Product>
-    <Version>12.0.1.0</Version>
+    <Version>12.0.1.1</Version>
     <Copyright>Copyright © AvaloniaUI 2023</Copyright>
     <Authors>Steven Kirk</Authors>
     <Company>AvaloniaUI</Company>
