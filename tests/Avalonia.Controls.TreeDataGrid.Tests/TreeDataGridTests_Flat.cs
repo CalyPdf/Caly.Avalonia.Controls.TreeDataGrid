@@ -557,6 +557,86 @@ namespace Avalonia.Controls.TreeDataGridTests
         }
 
         [AvaloniaFact(Timeout = 10000)]
+        public void AutoScrollSelectionIntoView_True_Scrolls_Selected_Row_Into_View()
+        {
+            var (target, _) = CreateTarget();
+
+            target.AutoScrollSelectionIntoView = true;
+            Assert.Equal(0, target.Scroll!.Offset.Y);
+
+            // Selecting a row far down should bring it into view when the option is enabled.
+            target.RowSelection!.Select(50);
+            Dispatcher.UIThread.RunJobs();
+            Layout(target);
+
+            Assert.True(target.Scroll.Offset.Y > 0,
+                $"Expected vertical scroll > 0 after selecting row 50, got Y={target.Scroll.Offset.Y}");
+        }
+
+        [AvaloniaFact(Timeout = 10000)]
+        public void AutoScrollSelectionIntoView_False_Does_Not_Scroll_On_Selection()
+        {
+            var (target, _) = CreateTarget();
+
+            Assert.False(target.AutoScrollSelectionIntoView);
+
+            // Plain programmatic selection must not scroll when the option is disabled (the default).
+            target.RowSelection!.Select(50);
+            Dispatcher.UIThread.RunJobs();
+            Layout(target);
+
+            Assert.Equal(0, target.Scroll!.Offset.Y);
+        }
+
+        [AvaloniaFact(Timeout = 10000)]
+        public void AutoScrollSelectionIntoView_Scrolls_Existing_Selection_When_Enabled()
+        {
+            var (target, _) = CreateTarget();
+
+            // Select first, then enable the option: the current selection should be brought into view.
+            target.RowSelection!.Select(50);
+            Dispatcher.UIThread.RunJobs();
+            Layout(target);
+            Assert.Equal(0, target.Scroll!.Offset.Y);
+
+            target.AutoScrollSelectionIntoView = true;
+            Dispatcher.UIThread.RunJobs();
+            Layout(target);
+
+            Assert.True(target.Scroll.Offset.Y > 0,
+                $"Expected vertical scroll > 0 after enabling AutoScrollSelectionIntoView, got Y={target.Scroll.Offset.Y}");
+        }
+
+        [AvaloniaFact(Timeout = 10000)]
+        public void AutoScrollSelectionIntoView_Respects_AutoScrollHorizontally_False()
+        {
+            var (target, _) = CreateTarget(columns:
+            [
+                new TextColumn<Model, int>("ID", x => x.Id, width: new GridLength(100, GridUnitType.Pixel)),
+                new TextColumn<Model, string?>("Title1", x => x.Title, width: new GridLength(80, GridUnitType.Pixel)),
+                new TextColumn<Model, string?>("Title2", x => x.Title, width: new GridLength(80, GridUnitType.Pixel)),
+            ]);
+
+            target.AutoScrollHorizontally = false;
+            target.AutoScrollSelectionIntoView = true;
+
+            // Establish a non-zero horizontal offset that must be preserved.
+            target.Scroll!.Offset = new Vector(50, 0);
+            Layout(target);
+            Assert.Equal(50, target.Scroll.Offset.X);
+
+            // Selecting a far-down row should scroll vertically into view without disturbing the
+            // horizontal offset, since AutoScrollHorizontally is disabled.
+            target.RowSelection!.Select(50);
+            Dispatcher.UIThread.RunJobs();
+            Layout(target);
+
+            Assert.Equal(50, target.Scroll.Offset.X);
+            Assert.True(target.Scroll.Offset.Y > 0,
+                $"Expected vertical scroll > 0 after selecting row 50, got Y={target.Scroll.Offset.Y}");
+        }
+
+        [AvaloniaFact(Timeout = 10000)]
         public void Should_Use_TextCell_StringFormat()
         {
             var (target, items) = CreateTarget(columns: new IColumn<Model>[]

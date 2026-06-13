@@ -23,6 +23,9 @@ namespace Avalonia.Controls
         public static readonly StyledProperty<bool> AutoScrollHorizontallyProperty =
             AvaloniaProperty.Register<TreeDataGrid, bool>(nameof(AutoScrollHorizontally), true);
 
+        public static readonly StyledProperty<bool> AutoScrollSelectionIntoViewProperty =
+            AvaloniaProperty.Register<TreeDataGrid, bool>(nameof(AutoScrollSelectionIntoView));
+
         public static readonly StyledProperty<bool> CanUserResizeColumnsProperty =
             AvaloniaProperty.Register<TreeDataGrid, bool>(nameof(CanUserResizeColumns), true);
 
@@ -122,6 +125,18 @@ namespace Avalonia.Controls
         {
             get => GetValue(AutoScrollHorizontallyProperty);
             set => SetValue(AutoScrollHorizontallyProperty, value);
+        }
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the selected row is brought into view whenever the
+        /// row selection changes, whether the change came from the user or from code. Defaults to
+        /// <c>false</c>. Plain programmatic selection on <see cref="TreeDataGrid"/> does not scroll on
+        /// its own; set this to <c>true</c> to keep the selected row visible.
+        /// </summary>
+        public bool AutoScrollSelectionIntoView
+        {
+            get => GetValue(AutoScrollSelectionIntoViewProperty);
+            set => SetValue(AutoScrollSelectionIntoViewProperty, value);
         }
 
         public bool CanUserResizeColumns
@@ -415,6 +430,13 @@ namespace Avalonia.Controls
             if (change.Property == AutoDragDropRowsProperty)
             {
                 DragDrop.SetAllowDrop(this, change.GetNewValue<bool>());
+            }
+            else if (change.Property == AutoScrollSelectionIntoViewProperty)
+            {
+                if (change.GetNewValue<bool>())
+                {
+                    ScrollSelectedRowIntoView();
+                }
             }
         }
 
@@ -808,6 +830,34 @@ namespace Avalonia.Controls
         private void OnSelectionInteractionChanged(object? sender, EventArgs e)
         {
             RowsPresenter?.UpdateSelection(SelectionInteraction);
+
+            if (AutoScrollSelectionIntoView)
+            {
+                ScrollSelectedRowIntoView();
+            }
+        }
+
+        private void ScrollSelectedRowIntoView()
+        {
+            if (RowSelection is not { } selection || Rows is not { } rows)
+            {
+                return;
+            }
+
+            var path = selection.SelectedIndex;
+            if (path.Count == 0)
+            {
+                return;
+            }
+
+            var rowIndex = rows.ModelIndexToRowIndex(path);
+            if (rowIndex < 0)
+            {
+                return;
+            }
+
+            // Defer so the rows presenter has applied the current selection/layout before scrolling.
+            Dispatcher.UIThread.Post(() => RowsPresenter?.BringIntoView(rowIndex), DispatcherPriority.Background);
         }
 
         private void OnSourcePropertyChanged(object? sender, PropertyChangedEventArgs e)

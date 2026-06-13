@@ -13,6 +13,10 @@
         <TextBlock Classes="realized-count" DockPanel.Dock="Bottom"/>
         <StackPanel DockPanel.Dock="Right" Spacing="4" Margin="4 0 0 0">
           <CheckBox IsChecked="{Binding Countries.CellSelection}">Cell Selection</CheckBox>
+          <CheckBox IsChecked="{Binding #countries.AutoScrollSelectionIntoView}">Auto-scroll selection into view</CheckBox>
+          <CheckBox IsChecked="{Binding #countries.AutoScrollHorizontally}">Auto-scroll horizontally</CheckBox>
+          <Button HorizontalAlignment="Stretch"
+                  Command="{Binding Countries.SelectRandom}">Select random country</Button>
           <Label Target="countryTextBox">_Country</Label>
           <TextBox Name="countryTextBox">Sealand</TextBox>
           <Label Target="regionTextBox">_Region</Label>
