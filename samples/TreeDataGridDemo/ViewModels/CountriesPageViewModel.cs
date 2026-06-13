@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Controls.Models.TreeDataGrid;
@@ -11,6 +12,7 @@ namespace TreeDataGridDemo.ViewModels
     internal class CountriesPageViewModel : ReactiveObject
     {
         private readonly ObservableCollection<Country> _data;
+        private readonly Random _random = new();
         private bool _cellSelection;
 
         public CountriesPageViewModel()
@@ -58,6 +60,23 @@ namespace TreeDataGridDemo.ViewModels
         public FlatTreeDataGridSource<Country> Source { get; }
 
         public void AddCountry(Country country) => _data.Add(country);
+
+        /// <summary>
+        /// Selects a random country. With <c>AutoScrollSelectionIntoView</c> enabled on the grid,
+        /// the selected row is brought into view even though the selection is set purely from code.
+        /// </summary>
+        public void SelectRandom()
+        {
+            if (_data.Count == 0)
+                return;
+
+            var index = new IndexPath(_random.Next(_data.Count));
+
+            if (Source.RowSelection is { } rowSelection)
+                rowSelection.SelectedIndex = index;
+            else if (Source.Selection is ITreeSelectionModel selection)
+                selection.SelectedIndex = index;
+        }
 
         public void RemoveSelected()
         {
