@@ -637,6 +637,74 @@ namespace Avalonia.Controls.TreeDataGridTests
         }
 
         [AvaloniaFact(Timeout = 10000)]
+        public void AutoScrollSelectionIntoView_Does_Not_Leak_Ghost_Rows()
+        {
+            // Reproduces the Caly bookmark panel: single-select + AutoScrollSelectionIntoView with
+            // variable row heights (the bookmark titles wrap, so rows differ in height). The
+            // selection is repeatedly moved from code, as happens when the document is scrolled.
+            // Each selection change brings the selected row into view. Because the row heights are
+            // not uniform, BringIntoView arranges the created element at an *estimated* position and
+            // scrolls there; the post-scroll realized range frequently does not contain the target
+            // index, so the created element is never consumed and is left in the visual tree as a
+            // visible "ghost" row. Over many selection changes these accumulate, making many rows
+            // appear selected/duplicated.
+            var items = new AvaloniaList<Model>(
+                Enumerable.Range(0, 200).Select(x => new Model { Id = x, Title = "Item " + x }));
+
+            var source = new FlatTreeDataGridSource<Model>(items);
+            source.RowSelection!.SingleSelect = true;
+            source.Columns.Add(new TemplateColumn<Model>(
+                "Title",
+                new Templates.FuncDataTemplate<Model>(
+                    (m, _) => new Border { Width = 80, Height = 10 + (m.Id % 9) * 12 },
+                    supportsRecycling: true)));
+
+            var target = new TreeDataGrid
+            {
+                Template = TestTemplates.TreeDataGridTemplate(),
+                Source = source,
+                AutoScrollSelectionIntoView = true,
+            };
+
+            var root = new TestWindow(target)
+            {
+                Styles =
+                {
+                    TestTemplates.TreeDataGridTemplateCellStyle,
+                    new Style(x => x.Is<TreeDataGridRow>())
+                    {
+                        Setters =
+                        {
+                            new Setter(TreeDataGridRow.TemplateProperty, TestTemplates.TreeDataGridRowTemplate()),
+                        }
+                    },
+                }
+            };
+
+            root.UpdateLayout();
+            Dispatcher.UIThread.RunJobs();
+
+            var rnd = new Random(1234);
+            for (var i = 0; i < 80; ++i)
+            {
+                source.RowSelection!.SelectedIndex = new IndexPath(rnd.Next(200));
+                Dispatcher.UIThread.RunJobs();
+                target.UpdateLayout();
+            }
+
+            var presenter = target.RowsPresenter!;
+            var realized = new HashSet<Control>(presenter.GetRealizedElements());
+            var ghosts = presenter.GetVisualChildren()
+                .OfType<TreeDataGridRow>()
+                .Where(r => r.IsVisible && !realized.Contains(r))
+                .ToList();
+
+            Assert.True(ghosts.Count == 0,
+                $"Expected no visible ghost rows, found {ghosts.Count} " +
+                $"(realized={realized.Count}).");
+        }
+
+        [AvaloniaFact(Timeout = 10000)]
         public void Should_Use_TextCell_StringFormat()
         {
             var (target, items) = CreateTarget(columns: new IColumn<Model>[]
