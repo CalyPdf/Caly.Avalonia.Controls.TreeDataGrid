@@ -157,6 +157,17 @@ namespace Avalonia.Controls.Primitives
                     UpdateLayout();
                 }
 
+                // If the element was never consumed by a layout pass (i.e. it did not become a
+                // realized element) it would otherwise be left in the visual tree as a visible
+                // "ghost": _scrollToElement is only cleared when the element is picked up during
+                // realization. This happens, for example, with variable element sizes where the
+                // estimated scroll position does not end up realizing this index. Recycle it so it
+                // doesn't leak as a duplicated/selected-looking row.
+                if (_scrollToElement is not null)
+                {
+                    RecycleElement(_scrollToElement, _scrollToIndex);
+                }
+
                 _scrollToElement = null;
                 _scrollToIndex = -1;
                 return scrollToElement;
