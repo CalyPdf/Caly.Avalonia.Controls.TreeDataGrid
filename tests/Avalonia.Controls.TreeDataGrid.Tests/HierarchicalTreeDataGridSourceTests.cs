@@ -489,6 +489,52 @@ namespace Avalonia.Controls.TreeDataGridTests
                 target.Expand(0);
                 Assert.Equal(8, target.Rows.Count);
             }
+
+            [AvaloniaFact(Timeout = 30000)]
+            public void ExpandAll_Does_Not_Overflow_The_Stack_On_A_Deep_Tree()
+            {
+                const int depth = 20000;
+
+                var data = CreateDeepData(depth);
+                var target = CreateTarget(data, false);
+
+                target.ExpandAll();
+                Assert.Equal(depth, target.Rows.Count);
+
+                target.CollapseAll();
+                Assert.Single(target.Rows);
+            }
+
+            /// <summary>
+            /// Creates a single chain of <paramref name="depth"/> nodes, each node having the
+            /// next one as its only child.
+            /// </summary>
+            private static AvaloniaListDebug<Node> CreateDeepData(int depth)
+            {
+                var root = new Node
+                {
+                    Id = 0,
+                    Caption = "Node 0",
+                    Children = new AvaloniaListDebug<Node>(),
+                };
+
+                var current = root;
+
+                for (var i = 1; i < depth; ++i)
+                {
+                    var child = new Node
+                    {
+                        Id = i,
+                        Caption = $"Node {i}",
+                        Children = new AvaloniaListDebug<Node>(),
+                    };
+
+                    current.Children!.Add(child);
+                    current = child;
+                }
+
+                return new AvaloniaListDebug<Node> { root };
+            }
         }
 
         [AvaloniaFact(Timeout = 10000)]
