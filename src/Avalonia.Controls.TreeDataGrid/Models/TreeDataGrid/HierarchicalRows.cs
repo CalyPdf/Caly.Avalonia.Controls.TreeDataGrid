@@ -261,14 +261,22 @@ namespace Avalonia.Controls.Models.TreeDataGrid
 
         private int AddRowsAndDescendants(int index, HierarchicalRow<TModel> row)
         {
+            // Iterative pre-order traversal: the model tree can be deep enough for recursion
+            // to overflow the stack.
             var i = index;
-            _flattenedRows.Insert(i++, row);
+            var stack = new Stack<HierarchicalRow<TModel>>();
+            stack.Push(row);
 
-            if (row.Children is object)
+            while (stack.Count > 0)
             {
-                foreach (var childRow in row.Children)
+                var current = stack.Pop();
+                _flattenedRows.Insert(i++, current);
+
+                if (current.Children is { } children)
                 {
-                    i += AddRowsAndDescendants(i, childRow);
+                    // Pushed in reverse so that the children are added in order.
+                    for (var c = children.Count - 1; c >= 0; --c)
+                        stack.Push(children[c]);
                 }
             }
 
@@ -277,23 +285,49 @@ namespace Avalonia.Controls.Models.TreeDataGrid
 
         private static void ExpandCollapseRecursiveCore(IReadOnlyList<HierarchicalRow<TModel>> rows, Func<TModel, bool> predicate)
         {
-            for (var i = 0; i < rows.Count; ++i)
-            {
-                var row = rows[i];
-                var expand = predicate(row.Model);
+            // Iterative traversal: the model tree can be deep enough for recursion to overflow
+            // the stack. A row is visited once to apply the predicate and, when it is being
+            // collapsed, revisited after its descendants have been visited.
+            var stack = new Stack<(HierarchicalRow<TModel> Row, bool Collapse)>();
 
-                if (expand)
+            PushChildren(stack, rows);
+
+            while (stack.Count > 0)
+            {
+                var (row, collapse) = stack.Pop();
+
+                if (collapse)
                 {
+                    // The descendants have now been visited, the row can be collapsed.
+                    row.IsExpanded = false;
+                    continue;
+                }
+
+                if (predicate(row.Model))
+                {
+                    // Expanding creates the children, so it has to happen before visiting them.
                     row.IsExpanded = true;
+
                     if (row.Children is { } children)
-                        ExpandCollapseRecursiveCore(children, predicate);
+                        PushChildren(stack, children);
                 }
                 else
                 {
+                    // Collapsing removes the children, so it has to happen after visiting them.
+                    stack.Push((row, true));
+
                     if (row.Children is { } children)
-                        ExpandCollapseRecursiveCore(children, predicate);
-                    row.IsExpanded = false;
+                        PushChildren(stack, children);
                 }
+            }
+
+            static void PushChildren(
+                Stack<(HierarchicalRow<TModel> Row, bool Collapse)> stack,
+                IReadOnlyList<HierarchicalRow<TModel>> rows)
+            {
+                // Pushed in reverse so that the rows are visited in order.
+                for (var i = rows.Count - 1; i >= 0; --i)
+                    stack.Push((rows[i], false));
             }
         }
 
