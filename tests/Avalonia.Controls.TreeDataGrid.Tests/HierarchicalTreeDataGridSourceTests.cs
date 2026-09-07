@@ -353,6 +353,27 @@ namespace Avalonia.Controls.TreeDataGridTests
 
                 AssertState(target, data, 10, false, new IndexPath(0));
             }
+
+            [AvaloniaFact(Timeout = 30000)]
+            public void Setting_Sort_Does_Not_Overflow_The_Stack_On_A_Deep_Tree()
+            {
+                const int depth = 20000;
+
+                var data = CreateDeepData(depth);
+                var target = CreateTarget(data, false);
+
+                // Expanding realizes the rows for the whole tree and collapsing keeps them
+                // realized, so sorting still has to walk all of them.
+                target.ExpandAll();
+                Assert.Equal(depth, target.Rows.Count);
+                target.CollapseAll();
+                Assert.Single(target.Rows);
+
+                // Each node has a single child so the order doesn't change.
+                target.Sort((x, y) => y.Id - x.Id);
+
+                Assert.Single(target.Rows);
+            }
         }
 
         public class Expansion
@@ -503,37 +524,6 @@ namespace Avalonia.Controls.TreeDataGridTests
 
                 target.CollapseAll();
                 Assert.Single(target.Rows);
-            }
-
-            /// <summary>
-            /// Creates a single chain of <paramref name="depth"/> nodes, each node having the
-            /// next one as its only child.
-            /// </summary>
-            private static AvaloniaListDebug<Node> CreateDeepData(int depth)
-            {
-                var root = new Node
-                {
-                    Id = 0,
-                    Caption = "Node 0",
-                    Children = new AvaloniaListDebug<Node>(),
-                };
-
-                var current = root;
-
-                for (var i = 1; i < depth; ++i)
-                {
-                    var child = new Node
-                    {
-                        Id = i,
-                        Caption = $"Node {i}",
-                        Children = new AvaloniaListDebug<Node>(),
-                    };
-
-                    current.Children!.Add(child);
-                    current = child;
-                }
-
-                return new AvaloniaListDebug<Node> { root };
             }
         }
 
@@ -997,6 +987,37 @@ namespace Avalonia.Controls.TreeDataGridTests
             var result = new AvaloniaListDebug<Node>();
             Create(counts, 0, result);
             return result;
+        }
+
+        /// <summary>
+        /// Creates a single chain of <paramref name="depth"/> nodes, each node having the next
+        /// one as its only child.
+        /// </summary>
+        private static AvaloniaListDebug<Node> CreateDeepData(int depth)
+        {
+            var root = new Node
+            {
+                Id = 0,
+                Caption = "Node 0",
+                Children = new AvaloniaListDebug<Node>(),
+            };
+
+            var current = root;
+
+            for (var i = 1; i < depth; ++i)
+            {
+                var child = new Node
+                {
+                    Id = i,
+                    Caption = $"Node {i}",
+                    Children = new AvaloniaListDebug<Node>(),
+                };
+
+                current.Children!.Add(child);
+                current = child;
+            }
+
+            return new AvaloniaListDebug<Node> { root };
         }
 
         private static HierarchicalTreeDataGridSource<Node> CreateTarget(

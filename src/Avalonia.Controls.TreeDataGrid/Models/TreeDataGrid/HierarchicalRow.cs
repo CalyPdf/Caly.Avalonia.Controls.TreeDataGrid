@@ -124,16 +124,24 @@ namespace Avalonia.Controls.Models.TreeDataGrid
 
         internal void SortChildren(Comparison<TModel>? comparison)
         {
-            _comparison = comparison;
+            // Iterative pre-order traversal: the row tree can be deep enough for recursion to
+            // overflow the stack.
+            var stack = new Stack<HierarchicalRow<TModel>>();
+            stack.Push(this);
 
-            if (_childRows is null)
-                return;
-
-            _childRows.Sort(comparison);
-
-            foreach (var row in _childRows)
+            while (stack.Count > 0)
             {
-                row.SortChildren(comparison);
+                var row = stack.Pop();
+                row._comparison = comparison;
+
+                if (row._childRows is null)
+                    continue;
+
+                row._childRows.Sort(comparison);
+
+                // Pushed in reverse so that the rows are sorted in order.
+                for (var i = row._childRows.Count - 1; i >= 0; --i)
+                    stack.Push(row._childRows[i]);
             }
         }
 
